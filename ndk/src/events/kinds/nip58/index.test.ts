@@ -1,7 +1,9 @@
 import NDKBadgeDefinition from "./NDKBadgeDefinition";
+import NDKBadgeAward from "./NDKBadgeAward";
+import NDKProfileBadge from "./NDKProfileBadge";
+
 import { NDKUser } from "../../../user/index.js";
 import { NDK } from "../../../ndk";
-import NDKBadgeAward from "./NDKBadgeAward";
 
 describe("NDKBadgeDefinition", () => {
     let ndk: NDK;
@@ -124,6 +126,61 @@ describe("NDKBadgeAward", () => {
             badgeaward.pTags = ["pubkey2", "pubkey3", "pubkey4"];
             expect(badgeaward.getMatchingTags("p").length).toEqual(3);
             expect(badgeaward.getMatchingTags("p")[1][1]).toEqual("pubkey3");
+        });
+    });
+});
+
+describe("NDKProfileBadge", () => {
+    let ndk: NDK;
+    let profilebadge: NDKProfileBadge;
+    let user1: NDKUser;
+
+    beforeEach(() => {
+        ndk = new NDK();
+        user1 = new NDKUser({
+            npub: "npub1l2vyh47mk2p0qlsku7hg0vn29faehy9hy34ygaclpn66ukqp3afqutajft",
+        });
+        profilebadge = new NDKProfileBadge(ndk);
+        profilebadge.author = user1;
+        profilebadge.setAwardAndDefinitionPairs([
+            {
+                a: ["30009:alice:bravery"],
+                e: ["<bravery badge award event id>", "wss://nostr.academy"],
+            },
+            {
+                a: ["30009:alice:honor"],
+                e: ["<honor badge award event id>", "wss://nostr.academy"],
+            },
+        ]);
+    });
+
+    describe("tags", () => {
+        it("to have ordered pairs", () => {
+            let order = 0;
+            let outOfOrder = false;
+            const tags = profilebadge.tags;
+            for (let i = 0; i < tags.length; i++) {
+                const tag = tags[i];
+                switch (order) {
+                    case 0:
+                        if (tag[0] === "a" && tag[1] === "30009:alice:bravery") order = 1;
+                        break;
+                    case 1:
+                        if (tag[0] === "e" && tag[1] === "<bravery badge award event id>")
+                            order = 2;
+                        else outOfOrder = true;
+                        break;
+                    case 2:
+                        if (tag[0] === "a" && tag[1] === "30009:alice:honor") order = 3;
+                        break;
+                    case 3:
+                        if (tag[0] === "e" && tag[1] === "<honor badge award event id>") order = 4;
+                        else outOfOrder = true;
+                        break;
+                }
+            }
+            expect(outOfOrder).toEqual(false);
+            expect(order).toEqual(4);
         });
     });
 });
