@@ -1,6 +1,7 @@
 import NDKBadgeDefinition from "./NDKBadgeDefinition";
 import { NDKUser } from "../../../user/index.js";
 import { NDK } from "../../../ndk";
+import NDKBadgeAward from "./NDKBadgeAward";
 
 describe("NDKBadgeDefinition", () => {
     let ndk: NDK;
@@ -95,6 +96,34 @@ describe("NDKBadgeDefinition", () => {
             expect(badgedefinition.getThumbs()[1].url).toEqual(
                 "https://domain.com/newthumb_256x256.png"
             );
+        });
+    });
+});
+
+describe("NDKBadgeAward", () => {
+    let ndk: NDK;
+    let badgeaward: NDKBadgeAward;
+    let user1: NDKUser;
+
+    beforeEach(() => {
+        ndk = new NDK();
+        user1 = new NDKUser({
+            npub: "npub1l2vyh47mk2p0qlsku7hg0vn29faehy9hy34ygaclpn66ukqp3afqutajft",
+        });
+        badgeaward = new NDKBadgeAward(ndk);
+        badgeaward.author = user1;
+    });
+
+    describe("tags", () => {
+        it('should support "a" tag', () => {
+            badgeaward.aTag = "30009:alice:bravery";
+            expect(badgeaward.tagValue("a")).toEqual("30009:alice:bravery");
+        });
+        it("should support multiple p tags", () => {
+            badgeaward.pTags = ["pubkey1"];
+            badgeaward.pTags = ["pubkey2", "pubkey3", "pubkey4"];
+            expect(badgeaward.getMatchingTags("p").length).toEqual(3);
+            expect(badgeaward.getMatchingTags("p")[1][1]).toEqual("pubkey3");
         });
     });
 });
