@@ -5,25 +5,23 @@ import type { NDKTag } from "../../index.js";
 import { NDKKind } from "../index.js";
 
 /**
- * Use defined parameteres and default values that the applyURL accepts
- */
-interface UserParam {
-    name: string; // name of query parameter
-    value: string; // default value of query parameter during configuration
-}
-
-/**
- * applyURL can return data field values as strings when awarding pages
+ * badge can return data field values as strings when awarding pages
  * added to Award Badge event as tags as ["data", <name>, <value>]
- * added to Award Badge content as "<displayName1>: <value1>, <displayName2>: <value2>, ..."
  */
 interface DataField {
     name: string; // name of data field
-    value: string; // display name of data field
+    label?: string; // optional display name of data field
+    description?: string; // optional description of data field
 }
 
 /**
- * Extends BadgeDefinition event to support addiontal tags used by AKA Profiles
+ * Extends BadgeDefinition event to support additional tags used by AKA Profiles.
+ *
+ * @class
+ * @extends NDKBadgeDefinition
+ * @param {NDK | undefined} ndk - The NDK instance or undefined.
+ * @param {NostrEvent} rawEvent - The raw NostrEvent.
+ * @property {NDKKind} kind - The kind of NDK, defaulted to NDKKind.BadgeDefinition.
  */
 export class AKABadgeDefinition extends NDKBadgeDefinition {
     constructor(ndk: NDK | undefined, rawEvent?: NostrEvent) {
@@ -42,57 +40,23 @@ export class AKABadgeDefinition extends NDKBadgeDefinition {
     }
 
     /**
-     * Url to page where user can apply for this badge
-     */
-    get applyURL(): string | undefined {
-        return this.tagValue("applyURL");
-    }
-
-    set applyURL(name: string | undefined) {
-        this.removeTag("applyURL");
-
-        if (name) this.tags.push(["applyURL", name]);
-    }
-
-    /**
-     * Parameters applyURL can accept, passed as query string parameters
-     */
-    get userParams(): UserParam[] {
-        const userParams: UserParam[] = [];
-        const tags = this.getMatchingTags("userParam");
-        tags.forEach((tag) => userParams.push({ name: tag[1], value: tag[2] }));
-        return userParams;
-    }
-
-    set userParams(params: UserParam[]) {
-        this.removeTag("userParam");
-
-        params.forEach((param) => {
-            this.tags.push(["userParam", param.name, param.value]);
-        });
-    }
-
-    /**
-     * helper instructions for using user-defined parameters in userParams.
-     */
-    get upHelp(): string | undefined {
-        return this.tagValue("upHelp");
-    }
-
-    set upHelp(name: string | undefined) {
-        this.removeTag("upHelp");
-
-        if (name) this.tags.push(["upHelp", name]);
-    }
-
-    /**
-     * applyURL can return data which is added to Badge Award event
+     * badge can return data which is added to Badge Award event
      * Data fields name the data fields it can return
      */
     get dataFields(): DataField[] {
         const dataFields: DataField[] = [];
         const tags = this.getMatchingTags("field");
-        tags.forEach((tag) => dataFields.push({ name: tag[1], value: tag[2] }));
+
+        tags.forEach((tag) => {
+            if (tag.length <= 1) return;
+
+            const dataField: any = { name: tag[1] };
+            if (tag.length >= 3) dataField.label = tags[2];
+            if (tag.length >= 4) dataField.description = tags[3];
+
+            dataFields.push(dataField as DataField);
+        });
+
         return dataFields;
     }
 
@@ -100,7 +64,13 @@ export class AKABadgeDefinition extends NDKBadgeDefinition {
         this.removeTag("field");
 
         dataFields.forEach((field) => {
-            this.tags.push(["field", field.name, field.value]);
+            const tag: string[] = [];
+            tag.push("field");
+            tag.push(field.name);
+            if (field.label) tag.push(field.label);
+            if (field.label && field.description) tag.push(field.description);
+
+            this.tags.push(tag);
         });
     }
 }

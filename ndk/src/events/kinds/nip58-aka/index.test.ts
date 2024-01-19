@@ -17,11 +17,14 @@ describe("AKABadgeDefinition", () => {
         badgedefinition.author = user1;
     });
 
-    describe("applyURL", () => {
+    describe("dataFields", () => {
         it("should work", () => {
-            badgedefinition.applyURL = "https://mydomain.com/apply";
+            badgedefinition.dataFields = [
+                { name: "name1", label: "Name 1", description: "Description of name one" },
+                { name: "name2", label: "Name 2", description: "Description of name two." },
+            ];
 
-            expect(badgedefinition.tagValue("applyURL")).toEqual("https://mydomain.com/apply");
+            expect(badgedefinition.tagValue("field")).toEqual("name1");
         });
     });
 
